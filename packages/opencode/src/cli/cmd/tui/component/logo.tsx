@@ -1,20 +1,34 @@
-import { TextAttributes, RGBA } from "@opentui/core"
-import { For, type JSX } from "solid-js"
+import { TextAttributes } from "@opentui/core"
+import { For, Show, createSignal, onCleanup, type JSX } from "solid-js"
 import { useTheme, tint } from "@tui/context/theme"
+import { useKV } from "../context/kv"
 import { logo, marks } from "@/cli/logo"
 
-// Shadow markers (rendered chars in parens):
-// _ = full shadow cell (space with bg=shadow)
-// ^ = letter top, shadow bottom (▀ with fg=letter, bg=shadow)
-// ~ = shadow top only (▀ with fg=shadow)
 const SHADOW_MARKER = new RegExp(`[${marks}]`)
+const SWEEP_WIDTH = 6
+const PAUSE_FRAMES = 20
+const FRAME_INTERVAL = 70
 
 export function Logo() {
   const { theme } = useTheme()
+  const kv = useKV()
 
-  const renderLine = (line: string, fg: RGBA, bold: boolean): JSX.Element[] => {
-    const shadow = tint(theme.background, fg, 0.25)
-    const attrs = bold ? TextAttributes.BOLD : undefined
+  const logoWidth = Math.max(...logo.map((l) => l.length))
+  const totalFrames = logoWidth + SWEEP_WIDTH + PAUSE_FRAMES
+
+  const [frame, setFrame] = createSignal(0)
+
+  const interval = setInterval(() => {
+    if (!kv.get("animations_enabled", true)) return
+    setFrame((f) => (f + 1) % totalFrames)
+  }, FRAME_INTERVAL)
+  onCleanup(() => clearInterval(interval))
+
+  const lineChars = logo.map((line) => Array.from(line).map((char, col) => ({ char, col })))
+
+  const renderLineStatic = (line: string): JSX.Element[] => {
+    const shadow = tint(theme.background, theme.text, 0.25)
+    const attrs = TextAttributes.BOLD
     const elements: JSX.Element[] = []
     let i = 0
 
@@ -24,7 +38,7 @@ export function Logo() {
 
       if (markerIndex === -1) {
         elements.push(
-          <text fg={fg} attributes={attrs} selectable={false}>
+          <text fg={theme.text} attributes={attrs} selectable={false}>
             {rest}
           </text>,
         )
@@ -33,7 +47,7 @@ export function Logo() {
 
       if (markerIndex > 0) {
         elements.push(
-          <text fg={fg} attributes={attrs} selectable={false}>
+          <text fg={theme.text} attributes={attrs} selectable={false}>
             {rest.slice(0, markerIndex)}
           </text>,
         )
@@ -43,14 +57,14 @@ export function Logo() {
       switch (marker) {
         case "_":
           elements.push(
-            <text fg={fg} bg={shadow} attributes={attrs} selectable={false}>
+            <text fg={theme.text} bg={shadow} attributes={attrs} selectable={false}>
               {" "}
             </text>,
           )
           break
         case "^":
           elements.push(
-            <text fg={fg} bg={shadow} attributes={attrs} selectable={false}>
+            <text fg={theme.text} bg={shadow} attributes={attrs} selectable={false}>
               ▀
             </text>,
           )
@@ -72,14 +86,67 @@ export function Logo() {
 
   return (
     <box>
-      <For each={logo.left}>
-        {(line, index) => (
-          <box flexDirection="row" gap={1}>
-            <box flexDirection="row">{renderLine(line, theme.textMuted, false)}</box>
-            <box flexDirection="row">{renderLine(logo.right[index()], theme.text, true)}</box>
-          </box>
-        )}
-      </For>
+      <Show
+        when={kv.get("animations_enabled", true)}
+        fallback={
+          <For each={logo}>
+            {(line) => (
+              <box flexDirection="row">
+                <box flexDirection="row">{renderLineStatic(line)}</box>
+              </box>
+            )}
+          </For>
+        }
+      >
+        <For each={lineChars}>
+          {(chars) => (
+            <box flexDirection="row">
+              <box flexDirection="row">
+                <For each={chars}>
+                  {(info) => {
+                    const charFg = () => {
+                      const beamPos = frame()
+                      if (beamPos >= logoWidth + SWEEP_WIDTH) return theme.text
+                      const dist = beamPos - info.col
+                      if (dist < 0 || dist > SWEEP_WIDTH) return theme.text
+                      const intensity = (1 - dist / SWEEP_WIDTH) * 0.8
+                      return tint(theme.text, theme.primary, intensity)
+                    }
+                    const charShadow = () => tint(theme.background, charFg(), 0.25)
+
+                    if (info.char === "_") {
+                      return (
+                        <text fg={charFg()} bg={charShadow()} attributes={TextAttributes.BOLD} selectable={false}>
+                          {" "}
+                        </text>
+                      )
+                    }
+                    if (info.char === "^") {
+                      return (
+                        <text fg={charFg()} bg={charShadow()} attributes={TextAttributes.BOLD} selectable={false}>
+                          ▀
+                        </text>
+                      )
+                    }
+                    if (info.char === "~") {
+                      return (
+                        <text fg={charShadow()} attributes={TextAttributes.BOLD} selectable={false}>
+                          ▀
+                        </text>
+                      )
+                    }
+                    return (
+                      <text fg={charFg()} attributes={TextAttributes.BOLD} selectable={false}>
+                        {info.char}
+                      </text>
+                    )
+                  }}
+                </For>
+              </box>
+            </box>
+          )}
+        </For>
+      </Show>
     </box>
   )
 }
