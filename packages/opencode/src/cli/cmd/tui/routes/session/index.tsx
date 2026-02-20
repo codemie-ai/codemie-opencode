@@ -323,36 +323,6 @@ export function Session() {
   const command = useCommandDialog()
   command.register(() => [
     {
-      title: session()?.share?.url ? "Copy share link" : "Share session",
-      value: "session.share",
-      suggested: route.type === "session",
-      keybind: "session_share",
-      category: "Session",
-      enabled: sync.data.config.share !== "disabled",
-      slash: {
-        name: "share",
-      },
-      onSelect: async (dialog) => {
-        const copy = (url: string) =>
-          Clipboard.copy(url)
-            .then(() => toast.show({ message: "Share URL copied to clipboard!", variant: "success" }))
-            .catch(() => toast.show({ message: "Failed to copy URL to clipboard", variant: "error" }))
-        const url = session()?.share?.url
-        if (url) {
-          await copy(url)
-          dialog.clear()
-          return
-        }
-        await sdk.client.session
-          .share({
-            sessionID: route.sessionID,
-          })
-          .then((res) => copy(res.data!.share!.url))
-          .catch(() => toast.show({ message: "Failed to share session", variant: "error" }))
-        dialog.clear()
-      },
-    },
-    {
       title: "Rename session",
       value: "session.rename",
       keybind: "session_rename",
@@ -433,25 +403,6 @@ export function Session() {
           modelID: selectedModel.modelID,
           providerID: selectedModel.providerID,
         })
-        dialog.clear()
-      },
-    },
-    {
-      title: "Unshare session",
-      value: "session.unshare",
-      keybind: "session_unshare",
-      category: "Session",
-      enabled: !!session()?.share?.url,
-      slash: {
-        name: "unshare",
-      },
-      onSelect: async (dialog) => {
-        await sdk.client.session
-          .unshare({
-            sessionID: route.sessionID,
-          })
-          .then(() => toast.show({ message: "Session unshared successfully", variant: "success" }))
-          .catch(() => toast.show({ message: "Failed to unshare session", variant: "error" }))
         dialog.clear()
       },
     },

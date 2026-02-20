@@ -6,7 +6,6 @@ import { Decimal } from "decimal.js"
 import z from "zod"
 import { type ProviderMetadata } from "ai"
 import { Config } from "../config/config"
-import { Flag } from "../flag/flag"
 import { Identifier } from "../id/id"
 import { Installation } from "../installation"
 
@@ -294,11 +293,6 @@ export namespace Session {
         }),
       )
     })
-    const cfg = await Config.get()
-    if (!result.parentID && (Flag.OPENCODE_AUTO_SHARE || cfg.share === "auto"))
-      share(result.id).catch(() => {
-        // Silently ignore sharing errors during session creation
-      })
     Bus.publish(Event.Updated, {
       info: result,
     })
@@ -563,7 +557,6 @@ export namespace Session {
       for (const child of await children(sessionID)) {
         await remove(child.id)
       }
-      await unshare(sessionID).catch(() => {})
       // CASCADE delete handles messages and parts automatically
       Database.use((db) => {
         db.delete(SessionTable).where(eq(SessionTable.id, sessionID)).run()

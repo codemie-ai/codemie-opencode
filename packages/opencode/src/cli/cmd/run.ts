@@ -3,7 +3,6 @@ import path from "path"
 import { pathToFileURL } from "bun"
 import { UI } from "../ui"
 import { cmd } from "./cmd"
-import { Flag } from "../../flag/flag"
 import { bootstrap } from "../bootstrap"
 import { EOL } from "os"
 import { createOpencodeClient, type Message, type OpencodeClient, type ToolPart } from "@opencode-ai/sdk/v2"
@@ -241,10 +240,6 @@ export const RunCommand = cmd({
         describe: "fork the session before continuing (requires --continue or --session)",
         type: "boolean",
       })
-      .option("share", {
-        type: "boolean",
-        describe: "share the session",
-      })
       .option("model", {
         type: "string",
         alias: ["m"],
@@ -375,7 +370,7 @@ export const RunCommand = cmd({
     }
 
     async function session(sdk: OpencodeClient) {
-      const baseID = args.continue ? (await sdk.session.list()).data?.find((s) => !s.parentID)?.id : args.session
+      const baseID = args.continue ? (await sdk.session.list()).data?.find((s: any) => !s.parentID)?.id : args.session
 
       if (baseID && args.fork) {
         const forked = await sdk.session.fork({ sessionID: baseID })
@@ -387,21 +382,6 @@ export const RunCommand = cmd({
       const name = title()
       const result = await sdk.session.create({ title: name, permission: rules })
       return result.data?.id
-    }
-
-    async function share(sdk: OpencodeClient, sessionID: string) {
-      const cfg = await sdk.config.get()
-      if (!cfg.data) return
-      if (cfg.data.share !== "auto" && !Flag.OPENCODE_AUTO_SHARE && !args.share) return
-      const res = await sdk.session.share({ sessionID }).catch((error) => {
-        if (error instanceof Error && error.message.includes("disabled")) {
-          UI.println(UI.Style.TEXT_DANGER_BOLD + "!  " + error.message)
-        }
-        return { error }
-      })
-      if (!res.error && "data" in res && res.data?.share?.url) {
-        UI.println(UI.Style.TEXT_INFO_BOLD + "~  " + res.data.share.url)
-      }
     }
 
     async function execute(sdk: OpencodeClient) {
@@ -573,8 +553,6 @@ export const RunCommand = cmd({
         UI.error("Session not found")
         process.exit(1)
       }
-      await share(sdk, sessionID)
-
       loop().catch((e) => {
         console.error(e)
         process.exit(1)
