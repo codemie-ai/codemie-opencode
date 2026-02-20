@@ -79,8 +79,8 @@ export namespace ACP {
   ): Promise<void> {
     const messages = await sdk.session
       .messages({ sessionID, directory }, { throwOnError: true })
-      .then((x) => x.data)
-      .catch((error) => {
+      .then((x: any) => x.data)
+      .catch((error: any) => {
         log.error("failed to fetch messages for usage update", { error })
         return undefined
       })
@@ -88,7 +88,7 @@ export namespace ACP {
     if (!messages) return
 
     const assistantMessages = messages.filter(
-      (m): m is { info: AssistantMessage; parts: SessionMessageResponse["parts"] } => m.info.role === "assistant",
+      (m: any): m is { info: AssistantMessage; parts: SessionMessageResponse["parts"] } => m.info.role === "assistant",
     )
 
     const lastAssistant = assistantMessages[assistantMessages.length - 1]
@@ -103,7 +103,7 @@ export namespace ACP {
     }
 
     const used = msg.tokens.input + (msg.tokens.cache?.read ?? 0)
-    const totalCost = assistantMessages.reduce((sum, m) => sum + m.info.cost, 0)
+    const totalCost = assistantMessages.reduce((sum: any, m: any) => sum + m.info.cost, 0)
 
     await connection
       .sessionUpdate({
@@ -277,8 +277,8 @@ export namespace ACP {
               },
               { throwOnError: true },
             )
-            .then((x) => x.data)
-            .catch((error) => {
+            .then((x: any) => x.data)
+            .catch((error: any) => {
               log.error("unexpected error when fetching message", { error })
               return undefined
             })
@@ -453,15 +453,15 @@ export namespace ACP {
               },
               { throwOnError: true },
             )
-            .then((x) => x.data)
-            .catch((error) => {
+            .then((x: any) => x.data)
+            .catch((error: any) => {
               log.error("unexpected error when fetching message", { error })
               return undefined
             })
 
           if (!message || message.info.role !== "assistant") return
 
-          const part = message.parts.find((p) => p.id === props.partID)
+          const part = message.parts.find((p: any) => p.id === props.partID)
           if (!part) return
 
           if (part.type === "text" && props.field === "text" && part.ignored !== true) {
@@ -614,13 +614,13 @@ export namespace ACP {
             },
             { throwOnError: true },
           )
-          .then((x) => x.data)
-          .catch((err) => {
+          .then((x: any) => x.data)
+          .catch((err: any) => {
             log.error("unexpected error when fetching message", { error: err })
             return undefined
           })
 
-        const lastUser = messages?.findLast((m) => m.info.role === "user")?.info
+        const lastUser = messages?.findLast((m: any) => m.info.role === "user")?.info
         if (lastUser?.role === "user") {
           result.models.currentModelId = `${lastUser.model.providerID}/${lastUser.model.modelID}`
           this.sessionManager.setModel(sessionId, {
@@ -665,13 +665,13 @@ export namespace ACP {
             },
             { throwOnError: true },
           )
-          .then((x) => x.data ?? [])
+          .then((x: any) => x.data ?? [])
 
-        const sorted = sessions.toSorted((a, b) => b.time.updated - a.time.updated)
-        const filtered = cursor ? sorted.filter((s) => s.time.updated < cursor) : sorted
+        const sorted = sessions.toSorted((a: any, b: any) => b.time.updated - a.time.updated)
+        const filtered = cursor ? sorted.filter((s: any) => s.time.updated < cursor) : sorted
         const page = filtered.slice(0, limit)
 
-        const entries: SessionInfo[] = page.map((session) => ({
+        const entries: SessionInfo[] = page.map((session: any) => ({
           sessionId: session.id,
           cwd: session.directory,
           title: session.title,
@@ -712,7 +712,7 @@ export namespace ACP {
             },
             { throwOnError: true },
           )
-          .then((x) => x.data)
+          .then((x: any) => x.data)
 
         if (!forked) {
           throw new Error("Fork session returned no data")
@@ -737,8 +737,8 @@ export namespace ACP {
             },
             { throwOnError: true },
           )
-          .then((x) => x.data)
-          .catch((err) => {
+          .then((x: any) => x.data)
+          .catch((err: any) => {
             log.error("unexpected error when fetching message", { error: err })
             return undefined
           })
@@ -1071,11 +1071,11 @@ export namespace ACP {
           },
           { throwOnError: true },
         )
-        .then((resp) => resp.data!)
+        .then((resp: any) => resp.data!)
 
       return agents
-        .filter((agent) => agent.mode !== "subagent" && !agent.hidden)
-        .map((agent) => ({
+        .filter((agent: any) => agent.mode !== "subagent" && !agent.hidden)
+        .map((agent: any) => ({
           id: agent.name,
           name: agent.name,
           description: agent.description,
@@ -1106,7 +1106,7 @@ export namespace ACP {
       const model = await defaultModel(this.config, directory)
       const sessionId = params.sessionId
 
-      const providers = await this.sdk.config.providers({ directory }).then((x) => x.data!.providers)
+      const providers: any[] = await this.sdk.config.providers({ directory }).then((x: any) => x.data!.providers)
       const entries = sortProvidersByName(providers)
       const availableVariants = modelVariantsFromProviders(entries, model)
       const currentVariant = this.sessionManager.getVariant(sessionId)
@@ -1130,13 +1130,13 @@ export namespace ACP {
           },
           { throwOnError: true },
         )
-        .then((resp) => resp.data!)
+        .then((resp: any) => resp.data!)
 
-      const availableCommands = commands.map((command) => ({
+      const availableCommands = commands.map((command: any) => ({
         name: command.name,
         description: command.description ?? "",
       }))
-      const names = new Set(availableCommands.map((c) => c.name))
+      const names = new Set(availableCommands.map((c: any) => c.name))
       if (!names.has("compact"))
         availableCommands.push({
           name: "compact",
@@ -1177,7 +1177,7 @@ export namespace ACP {
               },
               { throwOnError: true },
             )
-            .catch((error) => {
+            .catch((error: any) => {
               log.error("failed to add mcp server", { name: key, error })
             })
         }),
@@ -1210,9 +1210,9 @@ export namespace ACP {
 
     async unstable_setSessionModel(params: SetSessionModelRequest) {
       const session = this.sessionManager.get(params.sessionId)
-      const providers = await this.sdk.config
+      const providers: any[] = await this.sdk.config
         .providers({ directory: session.cwd }, { throwOnError: true })
-        .then((x) => x.data!.providers)
+        .then((x: any) => x.data!.providers)
 
       const selection = parseModelSelection(params.modelId, providers)
       this.sessionManager.setModel(session.id, selection.model)

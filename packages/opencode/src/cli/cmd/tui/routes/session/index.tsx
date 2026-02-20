@@ -349,7 +349,7 @@ export function Session() {
           .share({
             sessionID: route.sessionID,
           })
-          .then((res) => copy(res.data!.share!.url))
+          .then((res: any) => copy(res.data!.share!.url))
           .catch(() => toast.show({ message: "Failed to share session", variant: "error" }))
         dialog.clear()
       },
