@@ -24,9 +24,7 @@ export function Logo() {
   }, FRAME_INTERVAL)
   onCleanup(() => clearInterval(interval))
 
-  const lineChars = logo.map((line) =>
-    Array.from(line).map((char, col) => ({ char, col })),
-  )
+  const lineChars = logo.map((line) => Array.from(line).map((char, col) => ({ char, col })))
 
   const renderLineStatic = (line: string): JSX.Element[] => {
     const shadow = tint(theme.background, theme.text, 0.25)
