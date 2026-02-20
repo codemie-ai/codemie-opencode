@@ -401,7 +401,9 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           if (store.status !== "complete") setStore("status", "partial")
           // non-blocking
           Promise.all([
-            ...(args.continue ? [] : [sessionListPromise.then((sessions: any) => setStore("session", reconcile(sessions)))]),
+            ...(args.continue
+              ? []
+              : [sessionListPromise.then((sessions: any) => setStore("session", reconcile(sessions)))]),
             sdk.client.command.list().then((x: any) => setStore("command", reconcile(x.data ?? []))),
             sdk.client.lsp.status().then((x: any) => setStore("lsp", reconcile(x.data!))),
             sdk.client.mcp.status().then((x: any) => setStore("mcp", reconcile(x.data!))),
