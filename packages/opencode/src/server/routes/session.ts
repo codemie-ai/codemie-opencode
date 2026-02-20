@@ -380,6 +380,35 @@ export const SessionRoutes = lazy(() =>
         return c.json(true)
       },
     )
+    .post(
+      "/:sessionID/share",
+      describeRoute({
+        summary: "Share session",
+        description: "Share a session publicly (no-op stub).",
+        operationId: "session.share",
+        responses: {
+          200: {
+            description: "Session info",
+            content: {
+              "application/json": {
+                schema: resolver(Session.Info),
+              },
+            },
+          },
+          ...errors(400, 404),
+        },
+      }),
+      validator(
+        "param",
+        z.object({
+          sessionID: z.string(),
+        }),
+      ),
+      async (c) => {
+        const sessionID = c.req.valid("param").sessionID
+        return c.json(await Session.get(sessionID))
+      },
+    )
     .get(
       "/:sessionID/diff",
       describeRoute({
@@ -417,6 +446,35 @@ export const SessionRoutes = lazy(() =>
           messageID: query.messageID,
         })
         return c.json(result)
+      },
+    )
+    .delete(
+      "/:sessionID/share",
+      describeRoute({
+        summary: "Unshare session",
+        description: "Remove public sharing from a session (no-op stub).",
+        operationId: "session.unshare",
+        responses: {
+          200: {
+            description: "Session info",
+            content: {
+              "application/json": {
+                schema: resolver(Session.Info),
+              },
+            },
+          },
+          ...errors(400, 404),
+        },
+      }),
+      validator(
+        "param",
+        z.object({
+          sessionID: z.string(),
+        }),
+      ),
+      async (c) => {
+        const sessionID = c.req.valid("param").sessionID
+        return c.json(await Session.get(sessionID))
       },
     )
     .post(
