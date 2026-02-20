@@ -43,18 +43,10 @@ export namespace UI {
   export function logo(pad?: string) {
     const result: string[] = []
     const reset = "\x1b[0m"
-    const left = {
-      fg: Bun.color("gray", "ansi") ?? "",
-      shadow: "\x1b[38;5;235m",
-      bg: "\x1b[48;5;235m",
-    }
-    const right = {
-      fg: reset,
-      shadow: "\x1b[38;5;238m",
-      bg: "\x1b[48;5;238m",
-    }
-    const gap = " "
-    const draw = (line: string, fg: string, shadow: string, bg: string) => {
+    const bold = "\x1b[1m"
+    const shadow = "\x1b[38;5;238m"
+    const bg = "\x1b[48;5;238m"
+    const draw = (line: string) => {
       const parts: string[] = []
       for (const char of line) {
         if (char === "_") {
@@ -62,7 +54,7 @@ export namespace UI {
           continue
         }
         if (char === "^") {
-          parts.push(fg, bg, "▀", reset)
+          parts.push(bold, bg, "▀", reset)
           continue
         }
         if (char === "~") {
@@ -73,16 +65,13 @@ export namespace UI {
           parts.push(" ")
           continue
         }
-        parts.push(fg, char, reset)
+        parts.push(bold, char, reset)
       }
       return parts.join("")
     }
-    glyphs.left.forEach((row, index) => {
+    glyphs.forEach((row) => {
       if (pad) result.push(pad)
-      result.push(draw(row, left.fg, left.shadow, left.bg))
-      result.push(gap)
-      const other = glyphs.right[index] ?? ""
-      result.push(draw(other, right.fg, right.shadow, right.bg))
+      result.push(draw(row))
       result.push(EOL)
     })
     return result.join("").trimEnd()
