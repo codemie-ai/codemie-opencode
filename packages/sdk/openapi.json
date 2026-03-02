@@ -9726,6 +9726,13 @@
               "type": "string"
             }
           },
+          "pluginSources": {
+            "description": "GitHub repos to use as plugin sources (owner/repo format)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "snapshot": {
             "type": "boolean"
           },

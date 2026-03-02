@@ -90,9 +90,7 @@ export namespace PluginRegistry {
             const response = await fetch(manifestUrl, {
               headers: {
                 "User-Agent": "opencode-plugin-registry",
-                ...(process.env.GITHUB_TOKEN
-                  ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
-                  : {}),
+                ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
               },
             })
             if (!response.ok) {
@@ -122,11 +120,7 @@ export namespace PluginRegistry {
     return plugins
   }
 
-  export async function install(
-    source: string,
-    pluginName: string,
-    targetDir: string,
-  ): Promise<void> {
+  export async function install(source: string, pluginName: string, targetDir: string): Promise<void> {
     const { owner, repo, basePaths } = parseSource(source)
 
     // Find the plugin in the source
@@ -153,12 +147,7 @@ export namespace PluginRegistry {
     await downloadDir(owner, repo, pluginPath, targetDir)
   }
 
-  async function downloadDir(
-    owner: string,
-    repo: string,
-    remotePath: string,
-    localDir: string,
-  ): Promise<void> {
+  async function downloadDir(owner: string, repo: string, remotePath: string, localDir: string): Promise<void> {
     const contentsUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${remotePath}`
     const entries = await fetchJson(contentsUrl)
 
@@ -174,9 +163,7 @@ export namespace PluginRegistry {
         const response = await fetch(entry.download_url, {
           headers: {
             "User-Agent": "opencode-plugin-registry",
-            ...(process.env.GITHUB_TOKEN
-              ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
-              : {}),
+            ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
           },
         })
         if (!response.ok) {

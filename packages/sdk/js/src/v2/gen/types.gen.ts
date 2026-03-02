@@ -1730,6 +1730,10 @@ export type Config = {
     ignore?: Array<string>
   }
   plugin?: Array<string>
+  /**
+   * GitHub repos to use as plugin sources (owner/repo format)
+   */
+  pluginSources?: Array<string>
   snapshot?: boolean
   /**
    * Control sharing behavior:'manual' allows manual sharing via commands, 'auto' enables automatic sharing, 'disabled' disables all sharing

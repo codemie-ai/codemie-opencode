@@ -11,11 +11,7 @@ export const PluginCommand = cmd({
   command: "plugin",
   describe: "manage plugins",
   builder: (yargs) =>
-    yargs
-      .command(PluginListCommand)
-      .command(PluginInstallCommand)
-      .command(PluginRemoveCommand)
-      .demandCommand(),
+    yargs.command(PluginListCommand).command(PluginInstallCommand).command(PluginRemoveCommand).demandCommand(),
   async handler() {},
 })
 
@@ -35,9 +31,7 @@ const PluginListCommand = cmd({
 
         if (sources.length === 0) {
           prompts.log.warn("No plugin sources configured")
-          prompts.log.info(
-            `Add sources to opencode.json:\n  "pluginSources": ["anthropics/claude-plugins-official"]`,
-          )
+          prompts.log.info(`Add sources to opencode.json:\n  "pluginSources": ["anthropics/claude-plugins-official"]`)
           prompts.outro("Done")
           return
         }
@@ -66,9 +60,7 @@ const PluginListCommand = cmd({
               total++
             }
           } catch (e) {
-            prompts.log.error(
-              `  Failed to fetch: ${e instanceof Error ? e.message : String(e)}`,
-            )
+            prompts.log.error(`  Failed to fetch: ${e instanceof Error ? e.message : String(e)}`)
           }
         }
 
@@ -104,9 +96,7 @@ const PluginInstallCommand = cmd({
 
         if (sources.length === 0) {
           prompts.log.error("No plugin sources configured")
-          prompts.log.info(
-            `Add sources to opencode.json:\n  "pluginSources": ["anthropics/claude-plugins-official"]`,
-          )
+          prompts.log.info(`Add sources to opencode.json:\n  "pluginSources": ["anthropics/claude-plugins-official"]`)
           prompts.outro("Done")
           return
         }
