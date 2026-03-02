@@ -63,6 +63,9 @@ export namespace Config {
     if (target.instructions && source.instructions) {
       merged.instructions = Array.from(new Set([...target.instructions, ...source.instructions]))
     }
+    if (target.pluginSources && source.pluginSources) {
+      merged.pluginSources = Array.from(new Set([...target.pluginSources, ...source.pluginSources]))
+    }
     return merged
   }
 
@@ -478,20 +481,38 @@ export namespace Config {
     })) {
       plugins.push(pathToFileURL(item).href)
     }
+
+    // Discover .claude-plugin format directories
+    for (const item of await Glob.scan("{plugin,plugins}/*/.claude-plugin/plugin.json", {
+      cwd: dir,
+      absolute: true,
+      dot: true,
+      symlink: true,
+    })) {
+      // Return the plugin root dir (grandparent of plugin.json)
+      const pluginRoot = path.dirname(path.dirname(item))
+      plugins.push(`claude-plugin://${pluginRoot}`)
+    }
+
     return plugins
   }
 
   /**
    * Extracts a canonical plugin name from a plugin specifier.
    * - For file:// URLs: extracts filename without extension
+   * - For claude-plugin:// paths: extracts directory name
    * - For npm packages: extracts package name without version
    *
    * @example
    * getPluginName("file:///path/to/plugin/foo.js") // "foo"
+   * getPluginName("claude-plugin:///path/to/my-plugin") // "my-plugin"
    * getPluginName("oh-my-opencode@2.4.3") // "oh-my-opencode"
    * getPluginName("@scope/pkg@1.0.0") // "@scope/pkg"
    */
   export function getPluginName(plugin: string): string {
+    if (plugin.startsWith("claude-plugin://")) {
+      return path.basename(plugin.slice("claude-plugin://".length))
+    }
     if (plugin.startsWith("file://")) {
       return path.parse(new URL(plugin).pathname).name
     }
@@ -1033,6 +1054,11 @@ export namespace Config {
         })
         .optional(),
       plugin: z.string().array().optional(),
+      pluginSources: z
+        .string()
+        .array()
+        .optional()
+        .describe("GitHub repos to use as plugin sources (owner/repo format)"),
       snapshot: z.boolean().optional(),
       share: z
         .enum(["manual", "auto", "disabled"])
