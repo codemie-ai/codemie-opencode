@@ -12,6 +12,9 @@ import { Session } from "../session"
 import { NamedError } from "@opencode-ai/util/error"
 import { CopilotAuthPlugin } from "./copilot"
 import { gitlabAuthPlugin as GitlabAuthPlugin } from "@gitlab/opencode-gitlab-auth"
+import { LiteLLMSanitizerPlugin } from "./litellm-sanitizer"
+import { CLAUDE_PLUGIN_PREFIX, loadClaudePlugin } from "./claude-plugin"
+import { mergeDeep } from "remeda"
 
 export namespace Plugin {
   const log = Log.create({ service: "plugin" })
@@ -19,7 +22,7 @@ export namespace Plugin {
   const BUILTIN = ["opencode-anthropic-auth@0.0.13"]
 
   // Built-in plugins that are directly imported (not installed from npm)
-  const INTERNAL_PLUGINS: PluginInstance[] = [CodexAuthPlugin, CopilotAuthPlugin, GitlabAuthPlugin]
+  const INTERNAL_PLUGINS: PluginInstance[] = [CodexAuthPlugin, CopilotAuthPlugin, GitlabAuthPlugin, LiteLLMSanitizerPlugin]
 
   const state = Instance.state(async () => {
     const client = createOpencodeClient({
@@ -57,6 +60,40 @@ export namespace Plugin {
       // ignore old codex plugin since it is supported first party now
       if (plugin.includes("opencode-openai-codex-auth") || plugin.includes("opencode-copilot-auth")) continue
       log.info("loading plugin", { path: plugin })
+
+      // Handle .claude-plugin format directories
+      if (plugin.startsWith(CLAUDE_PLUGIN_PREFIX)) {
+        const pluginDir = plugin.slice(CLAUDE_PLUGIN_PREFIX.length)
+        await loadClaudePlugin(pluginDir)
+          .then((result) => {
+            hooks.push(result.hooks)
+            // Merge commands, agents, MCP, and LSP into config
+            if (Object.keys(result.commands).length) {
+              config.command = mergeDeep(config.command ?? {}, result.commands)
+            }
+            if (Object.keys(result.agents).length) {
+              config.agent = mergeDeep(config.agent ?? {}, result.agents)
+            }
+            if (Object.keys(result.mcp).length) {
+              config.mcp = mergeDeep(config.mcp ?? {}, result.mcp)
+            }
+            if (Object.keys(result.lsp).length) {
+              const existing = typeof config.lsp === "object" && config.lsp ? config.lsp : {}
+              config.lsp = mergeDeep(existing, result.lsp) as typeof config.lsp
+            }
+          })
+          .catch((err) => {
+            const message = err instanceof Error ? err.message : String(err)
+            log.error("failed to load claude-plugin", { path: pluginDir, error: message })
+            Bus.publish(Session.Event.Error, {
+              error: new NamedError.Unknown({
+                message: `Failed to load claude-plugin ${pluginDir}: ${message}`,
+              }).toObject(),
+            })
+          })
+        continue
+      }
+
       if (!plugin.startsWith("file://")) {
         const lastAtIndex = plugin.lastIndexOf("@")
         const pkg = lastAtIndex > 0 ? plugin.substring(0, lastAtIndex) : plugin
