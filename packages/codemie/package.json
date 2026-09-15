@@ -8,9 +8,6 @@
     "build": "bun run script/build.ts",
     "publish:npm": "bun run script/publish.ts"
   },
-  "bin": {
-    "codemie": "./bin/codemie"
-  },
   "devDependencies": {
     "@opencode-ai/script": "workspace:*",
     "@types/bun": "catalog:"

@@ -40,9 +40,8 @@ await Bun.file(`${wrapperDir}/package.json`).write(
     {
       name: wrapperName,
       description: "Codemie Code AI coding agent — platform wrapper",
-      bin: {
-        codemie: "./bin/codemie",
-      },
+      // No `bin` field: @codemieai/code resolves this binary by file path, and
+      // linking it as `codemie` shadows the @codemieai/code CLI on PATH.
       scripts: {
         postinstall: "bun ./postinstall.mjs || node ./postinstall.mjs",
       },
